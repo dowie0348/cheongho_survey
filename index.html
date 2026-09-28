@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2027학년도 목포청호초등학교 학부모 설문 및 관리자 대시보드</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for Admin Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        .radio-card:checked + label {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+            color: #0369a1;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+        }
+        .checkbox-card:checked + label {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+            color: #0369a1;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
+        }
+        .smooth-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased bg-slate-50 min-h-screen pb-24">
+
+    <!-- Sticky Top Header & Mode Switcher -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm backdrop-blur-md bg-white/95">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-sky-200">
+                    청호
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">목포청호초등학교</h1>
+                    <p class="text-xs text-slate-500 font-medium">2027학년도 교육계획 수립 설문 (학부모용)</p>
+                </div>
+            </div>
+
+            <!-- Tab Switcher (Survey vs Admin) -->
+            <div class="flex items-center space-x-2 bg-slate-100 p-1 rounded-2xl border border-slate-200">
+                <button id="tabSurveyBtn" onclick="switchTab('survey')" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm">
+                    <i class="fa-solid fa-pen-to-square mr-1.5"></i>설문 작성
+                </button>
+                <button id="tabAdminBtn" onclick="requestAdminAccess()" class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-lock mr-1.5" id="adminTabIcon"></i>관리자 대시보드
+                </button>
+            </div>
+
+            <!-- GAS Link Settings Button -->
+            <button onclick="openAppsScriptModal()" class="inline-flex items-center px-3 py-1.5 border border-sky-600 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95">
+                <i class="fa-solid fa-plug text-sky-600 mr-1.5"></i>
+                <span id="scriptStatusText">스프레드시트 연동</span>
+            </button>
+        </div>
+
+        <!-- Realtime Progress Bar for Survey -->
+        <div id="surveyProgressBarWrapper" class="w-full bg-slate-100 h-1.5">
+            <div id="progressBar" class="bg-gradient-to-r from-sky-500 to-indigo-600 h-1.5 w-0 transition-all duration-300"></div>
+        </div>
+    </header>
+
+    <!-- VIEW 1: PARENT SURVEY FORM -->
+    <main id="surveyView" class="max-w-3xl mx-auto px-4 pt-6">
+
+        <!-- Banner Card -->
+        <div class="bg-gradient-to-br from-sky-700 via-sky-800 to-indigo-900 text-white rounded-3xl p-6 sm:p-8 mb-8 smooth-shadow relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="relative z-10">
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-semibold backdrop-blur-sm">2026. 11. 30.</span>
+                    <span class="inline-block px-3 py-1 bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 rounded-full text-xs font-semibold backdrop-blur-sm">
+                        <i class="fa-solid fa-lock-open text-xs mr-1"></i> 로그인 없음 (자유 작성)
+                    </span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-3 leading-snug tracking-tight">2027학년도 학교 교육계획 수립을 위한 설문지</h2>
+                <p class="text-sky-100 text-xs sm:text-sm leading-relaxed mb-6 font-light">
+                    안녕하십니까? 학부모님의 의견은 우리 학교 교육의 발전과 질적 향상을 위한 소중한 기초 자료가 됩니다. 본 설문은 별도의 구글 로그인 없이 손쉽게 작성하실 수 있으며, 모든 응답 내용은 비밀이 보장됩니다.
+                </p>
+                
+                <!-- School Vision Box -->
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                    <p class="text-xs font-bold text-sky-200 uppercase tracking-wider mb-1 flex items-center">
+                        <i class="fa-solid fa-compass mr-1.5"></i> 학교 비전 및 교육목표
+                    </p>
+                    <p class="text-sm font-bold text-white mb-3">"함께 꿈꾸고 서로를 배려하며 자신의 능력을 키워가는 행복한 학교"</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-center">
+                        <div class="bg-white/15 p-2 rounded-xl border border-white/10"><span class="font-bold text-sky-200">더새롬</span><br>생각을 깨우침</div>
+                        <div class="bg-white/15 p-2 rounded-xl border border-white/10"><span class="font-bold text-sky-200">더나눔</span><br>배려와 나눔</div>
+                        <div class="bg-white/15 p-2 rounded-xl border border-white/10"><span class="font-bold text-sky-200">더채움</span><br>몸과 마음 건강</div>
+                        <div class="bg-white/15 p-2 rounded-xl border border-white/10"><span class="font-bold text-sky-200">더큰꿈</span><br>소질과 꿈 가꿈</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="surveyForm" onsubmit="handleFormSubmit(event)" class="space-y-8">
+
+            <!-- Section 1: 자녀 정보 및 전반 만족도 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow space-y-6">
+                <div class="border-b border-slate-100 pb-3 flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-sky-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">1. 자녀 학년 및 교육활동 만족도</h3>
+                </div>
+
+                <!-- Q1: 자녀 학년 -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q1. 학부모님의 자녀는 몇 학년에 재학 중입니까? <span class="text-amber-600 text-xs font-normal">(중복 선택 가능)</span> <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_1" value="1학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_1" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">1학년</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_2" value="2학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_2" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">2학년</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_3" value="3학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_3" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">3학년</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_4" value="4학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_4" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">4학년</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_5" value="5학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_5" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">5학년</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" name="q1_grade" id="grade_6" value="6학년" class="hidden checkbox-card" onchange="updateProgress()">
+                            <label for="grade_6" class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-semibold">6학년</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q2: 교육활동 전반 만족도 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q2. 2026학년도 목포청호초등학교 교육활동 전반에 대한 만족도는 어떻습니까? <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div>
+                            <input type="radio" name="q2_satisfaction" id="q2_5" value="매우 만족" class="hidden radio-card" required onchange="updateProgress()">
+                            <label for="q2_5" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">😄 매우 만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q2_satisfaction" id="q2_4" value="만족" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q2_4" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">🙂 만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q2_satisfaction" id="q2_3" value="보통" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q2_3" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">😐 보통</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q2_satisfaction" id="q2_2" value="불만족" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q2_2" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">🙁 불만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q2_satisfaction" id="q2_1" value="매우 불만족" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q2_1" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">😠 매우 불만족</label>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label for="q2_1_reason" class="block text-xs font-semibold text-slate-600 mb-1">Q2-1. 그렇게 생각하신 이유를 적어주세요.</label>
+                        <textarea id="q2_1_reason" name="q2_1_reason" rows="2" placeholder="의견을 자유롭게 적어주세요." class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all"></textarea>
+                    </div>
+                </div>
+
+                <!-- Q3: 청호 특색교육 만족도 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-1">
+                        Q3. 2026학년도 청호 특색교육은 「독서로 생각을 꽃피우는 청호 어린이」입니다. 이에 대해 어떻게 생각하십니까? <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-2">
+                        <div>
+                            <input type="radio" name="q3_special" id="q3_5" value="매우 만족" class="hidden radio-card" required onchange="toggleQ3Reason(); updateProgress();">
+                            <label for="q3_5" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">매우 만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q3_special" id="q3_4" value="만족" class="hidden radio-card" onchange="toggleQ3Reason(); updateProgress();">
+                            <label for="q3_4" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q3_special" id="q3_3" value="보통" class="hidden radio-card" onchange="toggleQ3Reason(); updateProgress();">
+                            <label for="q3_3" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">보통</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q3_special" id="q3_2" value="불만족" class="hidden radio-card" onchange="toggleQ3Reason(); updateProgress();">
+                            <label for="q3_2" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">불만족</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q3_special" id="q3_1" value="매우 불만족" class="hidden radio-card" onchange="toggleQ3Reason(); updateProgress();">
+                            <label for="q3_1" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-xs sm:text-sm font-semibold">매우 불만족</label>
+                        </div>
+                    </div>
+                    <div id="q3_reason_wrapper" class="mt-3">
+                        <label for="q3_1_reason" class="block text-xs font-semibold text-amber-700 mb-1">Q3-1. 불만족하신 이유가 무엇인가요? (불만족/매우 불만족 선택 시 작성)</label>
+                        <textarea id="q3_1_reason" name="q3_1_reason" rows="2" placeholder="개선이 필요한 부분을 적어주세요." class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none transition-all"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: 교육과정 편성 및 운영 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow space-y-6">
+                <div class="border-b border-slate-100 pb-3 flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-sky-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">2. 교육과정 편성 및 운영</h3>
+                </div>
+
+                <!-- Q4: 희망 특색 과목 (최대 2개) -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-bold text-slate-800">
+                            Q4. 개설을 바라는 특색있는 과목(활동) 주제는 무엇인가요? <span class="text-red-500">*</span>
+                        </label>
+                        <span id="q4_count" class="text-xs font-bold text-sky-700 bg-sky-100 px-2.5 py-1 rounded-full">0 / 2개 선택</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_1" value="독서인문교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_1" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-book text-sky-600 mr-2.5"></i>독서인문교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_2" value="정보(SW, AI)교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_2" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-robot text-sky-600 mr-2.5"></i>정보(SW, AI)교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_3" value="인성교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_3" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-heart text-sky-600 mr-2.5"></i>인성교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_4" value="생태환경교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_4" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-leaf text-sky-600 mr-2.5"></i>생태환경교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_5" value="민주시민교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_5" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-users text-sky-600 mr-2.5"></i>민주시민교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_6" value="기초학력 보장 및 학력 향상" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_6" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-graduation-cap text-sky-600 mr-2.5"></i>기초학력/학력향상</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_7" value="진로연계교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_7" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-compass text-sky-600 mr-2.5"></i>진로연계교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_8" value="스포츠, 놀이교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_8" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-volleyball text-sky-600 mr-2.5"></i>스포츠, 놀이교육</label></div>
+                        <div class="q4-item"><input type="checkbox" name="q4_topics" id="q4_9" value="예술교육" class="hidden checkbox-card" onchange="validateMaxCheck('q4_topics', 2); updateProgress();"><label for="q4_9" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 transition-all text-sm font-medium"><i class="fa-solid fa-palette text-sky-600 mr-2.5"></i>예술교육</label></div>
+                    </div>
+                </div>
+
+                <!-- Q5: 감축 희망 과목 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-1">
+                        Q5. 탄력적 교육과정 운영을 위해 시수를 감축해야 한다면 어느 과목을 줄여야 한다고 생각하십니까? <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-xs text-slate-500 mb-3">※ 교과 및 창체 수업 시수 20% 증감 가능 (예체능은 '증'만 가능)</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <div><input type="radio" name="q5_reduce" id="q5_none" value="없음(현행유지)" class="hidden radio-card" required onchange="updateProgress()"><label for="q5_none" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">없음(현행유지)</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_kor" value="국어" class="hidden radio-card" onchange="updateProgress()"><label for="q5_kor" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">국어</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_moral" value="도덕" class="hidden radio-card" onchange="updateProgress()"><label for="q5_moral" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">도덕</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_soc" value="사회" class="hidden radio-card" onchange="updateProgress()"><label for="q5_soc" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">사회</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_math" value="수학" class="hidden radio-card" onchange="updateProgress()"><label for="q5_math" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">수학</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_sci" value="과학" class="hidden radio-card" onchange="updateProgress()"><label for="q5_sci" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">과학</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_prac" value="실과" class="hidden radio-card" onchange="updateProgress()"><label for="q5_prac" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">실과</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_eng" value="영어" class="hidden radio-card" onchange="updateProgress()"><label for="q5_eng" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">영어</label></div>
+                        <div><input type="radio" name="q5_reduce" id="q5_creative" value="창의적 체험활동" class="hidden radio-card" onchange="updateProgress()"><label for="q5_creative" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">창의적 체험활동</label></div>
+                    </div>
+                </div>
+
+                <!-- Q6: 증배 희망 과목 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-1">
+                        Q6. 탄력적 교육과정 운영을 위해 시수를 증배해야 한다면 어느 과목을 늘려야 한다고 생각하십니까? <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                        <div><input type="radio" name="q6_increase" id="q6_none" value="없음(현행유지)" class="hidden radio-card" required onchange="updateProgress()"><label for="q6_none" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">없음(현행유지)</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_kor" value="국어" class="hidden radio-card" onchange="updateProgress()"><label for="q6_kor" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">국어</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_moral" value="도덕" class="hidden radio-card" onchange="updateProgress()"><label for="q6_moral" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">도덕</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_soc" value="사회" class="hidden radio-card" onchange="updateProgress()"><label for="q6_soc" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">사회</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_math" value="수학" class="hidden radio-card" onchange="updateProgress()"><label for="q6_math" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">수학</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_sci" value="과학" class="hidden radio-card" onchange="updateProgress()"><label for="q6_sci" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">과학</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_pe" value="체육" class="hidden radio-card" onchange="updateProgress()"><label for="q6_pe" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">체육</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_mus" value="음악" class="hidden radio-card" onchange="updateProgress()"><label for="q6_mus" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">음악</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_art" value="미술" class="hidden radio-card" onchange="updateProgress()"><label for="q6_art" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">미술</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_prac" value="실과" class="hidden radio-card" onchange="updateProgress()"><label for="q6_prac" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">실과</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_eng" value="영어" class="hidden radio-card" onchange="updateProgress()"><label for="q6_eng" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">영어</label></div>
+                        <div><input type="radio" name="q6_increase" id="q6_creative" value="창의적 체험활동" class="hidden radio-card" onchange="updateProgress()"><label for="q6_creative" class="flex items-center justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-medium">창의적 체험활동</label></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: 학사 일정 및 평가 안내 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow space-y-6">
+                <div class="border-b border-slate-100 pb-3 flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-sky-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">3. 학사 일정 및 평가 통지</h3>
+                </div>
+
+                <!-- Q7: 방학 형태 -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q7. 우리 학교에 가장 적합한 방학 형태는 무엇이라고 생각하십니까? <span class="text-red-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <div>
+                            <input type="radio" name="q7_vacation" id="q7_1" value="1월 종·졸업식 후 겨울방학(현행 유지)" class="hidden radio-card" required onchange="updateProgress()">
+                            <label for="q7_1" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 text-sm font-medium">① 1월 종·졸업식 후 겨울방학 (현행 유지)</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q7_vacation" id="q7_2" value="12월 겨울방학 ~ 2월 개학, 종·졸업식" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q7_2" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 text-sm font-medium">② 12월 겨울방학 ~ 2월 개학, 종·졸업식</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q7_vacation" id="q7_3" value="기타" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q7_3" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 text-sm font-medium">③ 기타</label>
+                        </div>
+                    </div>
+                    <input type="text" id="q7_etc_text" name="q7_etc_text" placeholder="기타 선택 시 의견을 입력해 주세요" class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+
+                <!-- Q8: 재량휴업일 지정 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-1">
+                        Q8. 2027학년도 5월 1일(금) 개교기념일과 5월 4일(월)을 학교장 재량휴업일로 지정하고자 합니다. 이에 대한 의견을 표시해 주세요. <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <div><input type="radio" name="q8_holiday" id="q8_yes" value="찬성" class="hidden radio-card" required onchange="updateProgress()"><label for="q8_yes" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-bold">👍 찬성</label></div>
+                        <div><input type="radio" name="q8_holiday" id="q8_no" value="반대" class="hidden radio-card" onchange="updateProgress()"><label for="q8_no" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-bold">👎 반대</label></div>
+                        <div><input type="radio" name="q8_holiday" id="q8_etc" value="기타" class="hidden radio-card" onchange="updateProgress()"><label for="q8_etc" class="flex items-center justify-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer text-sm font-bold">💬 기타</label></div>
+                    </div>
+                    <input type="text" id="q8_etc_text" name="q8_etc_text" placeholder="기타 선택 시 의견을 입력해 주세요" class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+
+                <!-- Q9: 과정중심평가 통지 방법 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-1">
+                        Q9. 과정중심평가 결과는 연 2회 학기말 생활통지표와 함께 안내하고 있습니다. 2027학년도 평가 안내 및 통지 방법에 대해 어떻게 생각하십니까? <span class="text-red-500">*</span>
+                    </label>
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <input type="radio" name="q9_eval" id="q9_1" value="현행 유지 (연 2회 통지)" class="hidden radio-card" required onchange="updateProgress()">
+                            <label for="q9_1" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 text-sm font-medium">① 현행 유지 (학기말 연 2회 통지)</label>
+                        </div>
+                        <div>
+                            <input type="radio" name="q9_eval" id="q9_2" value="기타 의견" class="hidden radio-card" onchange="updateProgress()">
+                            <label for="q9_2" class="flex items-center p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:border-sky-300 text-sm font-medium">② 기타 의견 작성</label>
+                        </div>
+                    </div>
+                    <input type="text" id="q9_etc_text" name="q9_etc_text" placeholder="기타 선택 시 개선 및 희망안을 입력해 주세요" class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+            </div>
+
+            <!-- Section 4: 주요 학교 행사 만족도 및 건의 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow space-y-6">
+                <div class="border-b border-slate-100 pb-3 flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-sky-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">4. 주요 학교 행사 만족도 및 건의</h3>
+                </div>
+
+                <!-- Q10: 운동회 -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q10. 운동장에서 전교생이 함께 참여하는 운동회 운영에 대한 의견 <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div><input type="radio" name="q10_sports" id="q10_5" value="매우 만족" class="hidden radio-card" required onchange="updateProgress()"><label for="q10_5" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 만족</label></div>
+                        <div><input type="radio" name="q10_sports" id="q10_4" value="만족" class="hidden radio-card" onchange="updateProgress()"><label for="q10_4" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">만족</label></div>
+                        <div><input type="radio" name="q10_sports" id="q10_3" value="보통" class="hidden radio-card" onchange="updateProgress()"><label for="q10_3" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">보통</label></div>
+                        <div><input type="radio" name="q10_sports" id="q10_2" value="불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q10_2" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">불만족</label></div>
+                        <div><input type="radio" name="q10_sports" id="q10_1" value="매우 불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q10_1" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 불만족</label></div>
+                    </div>
+                    <textarea id="q10_1_opinion" name="q10_1_opinion" rows="2" placeholder="Q10-1. 운동회 운영 방식에 대해 반영할 사항이 있다면 적어주세요." class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                </div>
+
+                <!-- Q11: 성과발표회 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q11. 학급별로 운영되는 성과발표회 현 운영 방식에 대한 의견 <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div><input type="radio" name="q11_showcase" id="q11_5" value="매우 만족" class="hidden radio-card" required onchange="updateProgress()"><label for="q11_5" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 만족</label></div>
+                        <div><input type="radio" name="q11_showcase" id="q11_4" value="만족" class="hidden radio-card" onchange="updateProgress()"><label for="q11_4" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">만족</label></div>
+                        <div><input type="radio" name="q11_showcase" id="q11_3" value="보통" class="hidden radio-card" onchange="updateProgress()"><label for="q11_3" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">보통</label></div>
+                        <div><input type="radio" name="q11_showcase" id="q11_2" value="불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q11_2" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">불만족</label></div>
+                        <div><input type="radio" name="q11_showcase" id="q11_1" value="매우 불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q11_1" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 불만족</label></div>
+                    </div>
+                    <textarea id="q11_1_opinion" name="q11_1_opinion" rows="2" placeholder="Q11-1. 성과발표회 운영 방식에 대해 반영할 사항이 있다면 적어주세요." class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                </div>
+
+                <!-- Q12: 현장체험학습 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label class="block text-sm font-bold text-slate-800 mb-2">
+                        Q12. 학년별 현장체험학습 운영에 대한 의견 <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <div><input type="radio" name="q12_trip" id="q12_5" value="매우 만족" class="hidden radio-card" required onchange="updateProgress()"><label for="q12_5" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 만족</label></div>
+                        <div><input type="radio" name="q12_trip" id="q12_4" value="만족" class="hidden radio-card" onchange="updateProgress()"><label for="q12_4" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">만족</label></div>
+                        <div><input type="radio" name="q12_trip" id="q12_3" value="보통" class="hidden radio-card" onchange="updateProgress()"><label for="q12_3" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">보통</label></div>
+                        <div><input type="radio" name="q12_trip" id="q12_2" value="불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q12_2" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">불만족</label></div>
+                        <div><input type="radio" name="q12_trip" id="q12_1" value="매우 불만족" class="hidden radio-card" onchange="updateProgress()"><label for="q12_1" class="flex justify-center p-2.5 border-2 border-slate-200 rounded-2xl cursor-pointer text-xs sm:text-sm font-medium">매우 불만족</label></div>
+                    </div>
+                    <textarea id="q12_1_opinion" name="q12_1_opinion" rows="2" placeholder="Q12-1. 현장체험학습 운영 방식에 대해 반영할 사항이 있다면 적어주세요." class="mt-2 w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"></textarea>
+                </div>
+
+                <!-- Q13: 기타 의견 -->
+                <div class="pt-4 border-t border-slate-100">
+                    <label for="q13_overall" class="block text-sm font-bold text-slate-800 mb-1">
+                        Q13. 학교 운영 전반에 대해 바라는 점이나 건의사항이 있다면 적어주십시오.
+                    </label>
+                    <textarea id="q13_overall" name="q13_overall" rows="4" placeholder="따뜻한 조언이나 제안하고 싶은 의견을 자유롭게 작성해 주세요." class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none transition-all"></textarea>
+                </div>
+            </div>
+
+            <!-- Submit Button Section -->
+            <div class="pt-4">
+                <button type="submit" id="submitBtn" class="w-full py-4 bg-sky-600 hover:bg-sky-700 active:scale-[0.99] text-white font-bold text-lg rounded-2xl shadow-xl shadow-sky-200 hover:shadow-sky-300 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>설문 응답 제출하기</span>
+                </button>
+                <p class="text-center text-xs text-slate-400 mt-3 font-medium">구글 로그인 없이 바로 응답할 수 있는 학부모 전용 설문입니다.</p>
+            </div>
+        </form>
+    </main>
+
+    <!-- VIEW 2: ADMIN DASHBOARD VIEW -->
+    <main id="adminView" class="max-w-6xl mx-auto px-4 pt-6 hidden">
+
+        <!-- Admin Control Bar -->
+        <div class="bg-slate-900 text-white rounded-3xl p-6 mb-8 smooth-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <span class="bg-sky-500 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">LIVE ADMIN</span>
+                    <h2 class="text-xl sm:text-2xl font-black">2027 학부모 설문 분석 대시보드</h2>
+                </div>
+                <p class="text-xs text-slate-400">구글 스프레드시트 실시간 수집 및 항목별 시각화 통계</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="fetchSheetDataData()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all flex items-center shadow-md">
+                    <i class="fa-solid fa-rotate text-sm mr-1.5" id="syncIcon"></i> 구글 시트 동기화
+                </button>
+                <button onclick="exportCSV()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center shadow-md">
+                    <i class="fa-solid fa-file-excel text-sm mr-1.5"></i> CSV 다운로드
+                </button>
+                <button onclick="loadSampleData()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium">
+                    샘플 데이터 채우기
+                </button>
+                <button onclick="lockAdmin()" class="px-3 py-2 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/50 rounded-xl text-xs font-bold transition-all flex items-center">
+                    <i class="fa-solid fa-lock text-xs mr-1.5"></i> 대시보드 잠금
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-5 rounded-3xl border border-slate-200/80 smooth-shadow">
+                <p class="text-xs font-bold text-slate-400 mb-1">총 응답 학부모 수</p>
+                <h3 id="statTotalCount" class="text-3xl font-black text-slate-900">0 명</h3>
+                <p class="text-[11px] text-sky-600 mt-1"><i class="fa-solid fa-clock mr-1"></i>실시간 통계 기준</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200/80 smooth-shadow">
+                <p class="text-xs font-bold text-slate-400 mb-1">전반적 만족도 (만족 이상)</p>
+                <h3 id="statSatisfactionRate" class="text-3xl font-black text-emerald-600">0%</h3>
+                <p class="text-[11px] text-slate-500 mt-1">매우 만족 + 만족 비율</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200/80 smooth-shadow">
+                <p class="text-xs font-bold text-slate-400 mb-1">Q4 1위 선호 특색과목</p>
+                <h3 id="statTopQ4" class="text-lg font-black text-indigo-600 truncate">-</h3>
+                <p class="text-[11px] text-indigo-400 mt-1">최다 선택 개설희망 주제</p>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-slate-200/80 smooth-shadow">
+                <p class="text-xs font-bold text-slate-400 mb-1">5월 재량휴업일 찬성률</p>
+                <h3 id="statHolidayApprove" class="text-3xl font-black text-amber-600">0%</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Q8 찬성 응답 비중</p>
+            </div>
+        </div>
+
+        <!-- Sector 1: 자녀 학년 및 교육활동 만족도 -->
+        <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow mb-8 space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-sky-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">섹터 1. 자녀 학년 및 교육활동 만족도</h3>
+                </div>
+                <span class="text-xs text-slate-400 font-medium">Q1 ~ Q3 분석</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Q1 Chart -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                        <i class="fa-solid fa-users-viewfinder text-sky-600 mr-2"></i>Q1. 자녀 학년 분포 (중복응답 포함)
+                    </h4>
+                    <div class="h-64 relative">
+                        <canvas id="chartQ1"></canvas>
+                    </div>
+                </div>
+
+                <!-- Q2 & Q3 Satisfaction Charts -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                        <i class="fa-solid fa-smile text-emerald-600 mr-2"></i>Q2. 전반적 만족도 & Q3. 특색교육 만족도
+                    </h4>
+                    <div class="h-64 relative">
+                        <canvas id="chartQ2Q3"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sector 2: 교육과정 편성 및 운영 (Sheet2 Q4 Focus) -->
+        <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow mb-8 space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-indigo-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">섹터 2. 교육과정 편성 및 운영 (Q4 특색과목 시트2 분석)</h3>
+                </div>
+                <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">시트2 분리 연동</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Q4 Main Chart (2-column width) -->
+                <div class="lg:col-span-2 bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-bold text-indigo-900 flex items-center">
+                            <i class="fa-solid fa-award text-indigo-600 mr-2"></i>Q4. 개설 희망 특색 과목/활동 주제 순위
+                        </h4>
+                        <span class="text-xs text-indigo-600 font-semibold">최대 2개 중복 선택</span>
+                    </div>
+                    <div class="h-72 relative">
+                        <canvas id="chartQ4Topics"></canvas>
+                    </div>
+                </div>
+
+                <!-- Q5 vs Q6 Reduce/Increase Chart -->
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                        <i class="fa-solid fa-sliders text-amber-600 mr-2"></i>Q5 감축 vs Q6 증배 희망
+                    </h4>
+                    <div class="h-72 relative">
+                        <canvas id="chartQ5Q6"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sector 3: 학사 일정 및 평가 통지 -->
+        <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow mb-8 space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-emerald-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">섹터 3. 학사 일정 및 평가 통지</h3>
+                </div>
+                <span class="text-xs text-slate-400 font-medium">Q7 ~ Q9 분석</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Q7 Vacation -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fa-solid fa-plane-departure text-sky-600 mr-2"></i>Q7. 선호 방학 형태
+                    </h4>
+                    <div class="h-56 relative">
+                        <canvas id="chartQ7"></canvas>
+                    </div>
+                </div>
+
+                <!-- Q8 Discretionary Holiday -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fa-solid fa-calendar-check text-amber-600 mr-2"></i>Q8. 5월 재량휴업일 지정
+                    </h4>
+                    <div class="h-56 relative">
+                        <canvas id="chartQ8"></canvas>
+                    </div>
+                </div>
+
+                <!-- Q9 Evaluation Notice -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-800 mb-2 flex items-center">
+                        <i class="fa-solid fa-file-signature text-purple-600 mr-2"></i>Q9. 평가 결과 통지
+                    </h4>
+                    <div class="h-56 relative">
+                        <canvas id="chartQ9"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sector 4: 주요 학교 행사 만족도 및 건의 -->
+        <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 smooth-shadow mb-8 space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-6 bg-purple-600 rounded-full inline-block"></span>
+                    <h3 class="text-lg font-bold text-slate-900">섹터 4. 주요 학교 행사 만족도 및 건의</h3>
+                </div>
+                <span class="text-xs text-slate-400 font-medium">Q10 ~ Q13 분석</span>
+            </div>
+
+            <!-- Events Chart -->
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
+                    <i class="fa-solid fa-flag-checkered text-rose-600 mr-2"></i>주요 행사 만족도 비교 (운동회 / 성과발표회 / 현장체험학습)
+                </h4>
+                <div class="h-64 relative">
+                    <canvas id="chartEvents"></canvas>
+                </div>
+            </div>
+
+            <!-- Qualitative Feedback Accordion / Table -->
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-sm font-bold text-slate-800 flex items-center">
+                        <i class="fa-solid fa-comments text-sky-600 mr-2"></i>학부모 주관식 작성 의견 모아보기
+                    </h4>
+                    <select id="textFilterSelect" onchange="renderTextFeedback()" class="text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none">
+                        <option value="all">전체 주관식 의견 보기</option>
+                        <option value="q2_1">Q2-1. 전반적 만족도 이유</option>
+                        <option value="q3_1">Q3-1. 특색교육 불만족 이유</option>
+                        <option value="q10_1">Q10-1. 운동회 건의사항</option>
+                        <option value="q11_1">Q11-1. 성과발표회 건의사항</option>
+                        <option value="q12_1">Q12-1. 현장체험학습 건의사항</option>
+                        <option value="q13">Q13. 종합 바라는점/건의사항</option>
+                    </select>
+                </div>
+                <div id="textFeedbackContainer" class="max-h-72 overflow-y-auto space-y-2 custom-scrollbar pr-1">
+                    <p class="text-xs text-slate-400 text-center py-6">수집된 주관식 응답이 없습니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Raw Data Table -->
+        <section class="bg-white rounded-3xl p-6 border border-slate-200/80 smooth-shadow space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-table-list mr-2 text-slate-600"></i>응답 원본 전체 목록
+                </h3>
+                <input type="text" id="tableSearchInput" oninput="filterTable()" placeholder="검색어 입력 (학년, 답변 등)..." class="px-3.5 py-1.5 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-sky-500 w-full sm:w-64">
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-xs text-left text-slate-600 border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <tr>
+                            <th class="p-2.5 whitespace-nowrap">#</th>
+                            <th class="p-2.5 whitespace-nowrap">제출일시</th>
+                            <th class="p-2.5 whitespace-nowrap">자녀 학년</th>
+                            <th class="p-2.5 whitespace-nowrap">전반 만족도</th>
+                            <th class="p-2.5 whitespace-nowrap">특색 만족도</th>
+                            <th class="p-2.5 whitespace-nowrap">Q4 희망 특색과목</th>
+                            <th class="p-2.5 whitespace-nowrap">감축 과목</th>
+                            <th class="p-2.5 whitespace-nowrap">증배 과목</th>
+                            <th class="p-2.5 whitespace-nowrap">방학 형태</th>
+                            <th class="p-2.5 whitespace-nowrap">5월 휴업일</th>
+                            <th class="p-2.5 whitespace-nowrap">Q13 종합의견</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rawTableBody">
+                        <tr>
+                            <td colspan="11" class="text-center py-8 text-slate-400">데이터가 없습니다. [구글 시트 동기화]를 누르거나 설문을 제출해 보세요.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Google Apps Script Config Modal -->
+    <div id="appsScriptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <button onclick="closeAppsScriptModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-2">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">구글 스프레드시트 & 대시보드 연동</h3>
+                    <p class="text-xs text-slate-500">시트1(전체 응답) + 시트2(Q4 특색과목 통계) 자동 기록 및 대시보드 조회</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 text-sm text-slate-600">
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 text-xs leading-relaxed">
+                    <p class="font-bold text-amber-800 text-sm mb-1">
+                        <i class="fa-solid fa-user-lock mr-1 text-amber-600"></i> 구글 로그인 없는 수집 & 시트2 자동분석 스크립트:
+                    </p>
+                    <ol class="list-decimal list-inside space-y-1 mt-1 font-medium">
+                        <li>구글 스프레드시트 ➔ [확장 프로그램] ➔ [Apps Script] 클릭</li>
+                        <li>기존 코드를 모두 지우고 아래 최신 코드를 붙여넣은 뒤 <strong>[저장]</strong> (Ctrl+S)</li>
+                        <li>우측 상단 <strong>[배포] ➔ [새 배포]</strong> (톱니바퀴 ➔ 웹 앱)</li>
+                        <li>다음과 같이 설정 후 배포:
+                            <ul class="list-disc list-inside pl-4 my-1 text-slate-800 font-semibold">
+                                <li>다음 사용자 권한으로 실행: <span class="bg-amber-200 px-1 rounded text-slate-900">나 (Me)</span></li>
+                                <li>액세스 권한 있는 사용자: <span class="bg-emerald-200 px-1 rounded text-emerald-900">모든 사용자 (Anyone)</span> 🔥 필수!</li>
+                            </ul>
+                        </li>
+                        <li>웹 앱 URL을 복사하여 아래에 입력하세요.</li>
+                    </ol>
+                </div>
+
+                <!-- Code block with copy button -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-slate-700">GAS 업데이트 코드 (doGet 및 시트2 특색과목 분리)</span>
+                        <button onclick="copyAppsScriptCode()" class="text-xs text-sky-600 font-bold hover:underline"><i class="fa-solid fa-copy mr-1"></i>코드 복사</button>
+                    </div>
+                    <pre id="gasCodeText" class="bg-slate-900 text-slate-200 text-xs p-3.5 rounded-2xl overflow-x-auto font-mono max-h-48 border border-slate-800 leading-relaxed">
+function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet1 = ss.getSheetByName("설문응답") || ss.getSheets()[0];
+    var data1 = sheet1.getDataRange().getValues();
+    
+    var sheet2 = ss.getSheetByName("시트2_특색과목통계");
+    var data2 = sheet2 ? sheet2.getDataRange().getValues() : [];
+    
+    var result = {
+      result: "success",
+      responses: data1,
+      q4Stats: data2
+    };
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ result: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet1 = ss.getSheetByName("설문응답");
+    if (!sheet1) {
+      sheet1 = ss.getSheets()[0];
+      sheet1.setName("설문응답");
+    }
+    
+    var data = JSON.parse(e.postData.contents);
+    
+    if (sheet1.getLastRow() === 0) {
+      sheet1.appendRow([
+        "제출일시", "자녀 학년", "전반적 만족도", "만족도 이유", 
+        "특색교육 만족도", "특색교육 불만족 이유", "희망 특색과목", 
+        "감축 희망과목", "증배 희망과목", "희망 방학형태", "재량휴업일 의견", 
+        "평가통지 의견", "운동회 만족도", "운동회 건의", "성과발표회 만족도", 
+        "성과발표회 건의", "현장체험학습 만족도", "현장체험학습 건의", "종합 건의사항"
+      ]);
+    }
+    
+    var timestamp = new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+    var gradeStr = data.q1_grade ? data.q1_grade.join(", ") : "";
+    var q4Str = data.q4_topics ? data.q4_topics.join(", ") : "";
+    
+    sheet1.appendRow([
+      timestamp,
+      gradeStr,
+      data.q2_satisfaction || "",
+      data.q2_1_reason || "",
+      data.q3_special || "",
+      data.q3_1_reason || "",
+      q4Str,
+      data.q5_reduce || "",
+      data.q6_increase || "",
+      data.q7_vacation || "",
+      data.q8_holiday || "",
+      data.q9_eval || "",
+      data.q10_sports || "",
+      data.q10_1_opinion || "",
+      data.q11_showcase || "",
+      data.q11_1_opinion || "",
+      data.q12_trip || "",
+      data.q12_1_opinion || "",
+      data.q13_overall || ""
+    ]);
+    
+    // 시트 2: Q4 특색과목(활동) 전용 기록
+    var sheet2 = ss.getSheetByName("시트2_특색과목통계");
+    if (!sheet2) {
+      sheet2 = ss.insertSheet("시트2_특색과목통계");
+      sheet2.appendRow(["제출일시", "자녀 학년", "선택 특색과목 주제"]);
+    }
+    
+    if (data.q4_topics && data.q4_topics.length > 0) {
+      data.q4_topics.forEach(function(topic) {
+        sheet2.appendRow([timestamp, gradeStr, topic]);
+      });
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ result: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ result: "error", error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                </div>
+
+                <!-- Input for Web App URL -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">웹 앱 URL (Web App URL)</label>
+                    <input type="url" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none">
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button type="button" onclick="saveScriptUrl()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md transition-all">
+                        스프레드시트 연동 저장
+                    </button>
+                    <button type="button" onclick="closeAppsScriptModal()" class="px-4 py-3 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 font-semibold text-sm">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Notifications -->
+    <div id="noticeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl space-y-4">
+            <div id="modalIcon" class="w-16 h-16 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-2xl mx-auto">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h4 id="modalTitle" class="text-xl font-bold text-slate-900">제출이 완료되었습니다</h4>
+            <p id="modalMessage" class="text-sm text-slate-600 leading-relaxed">학부모님의 소중한 의견은 2027학년도 목포청호초등학교 교육계획 수립에 귀중하게 반영하겠습니다.</p>
+            <button onclick="closeNoticeModal()" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm shadow-md">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Authentication Password Modal -->
+    <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 text-center shadow-2xl space-y-5 relative animate-in fade-in zoom-in duration-200">
+            <button onclick="closeAdminAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="w-14 h-14 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center text-2xl mx-auto shadow-inner">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-bold text-slate-900">관리자 인증</h4>
+                <p class="text-xs text-slate-500 mt-1">대시보드 접근을 위해 비밀번호를 입력해 주세요.</p>
+            </div>
+
+            <form onsubmit="handleAdminPasswordSubmit(event)" class="space-y-3">
+                <div>
+                    <input type="password" id="adminPasswordInput" autocomplete="current-password" placeholder="비밀번호 입력 (기본: 1234)" class="w-full px-4 py-3 text-center text-base tracking-widest border border-slate-300 rounded-2xl focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition-all">
+                    <p id="adminAuthError" class="text-xs font-semibold text-rose-500 mt-1.5 hidden flex items-center justify-center">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> 비밀번호가 일치하지 않습니다.
+                    </p>
+                </div>
+
+                <div class="flex space-x-2 pt-1">
+                    <button type="submit" class="flex-1 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-sm shadow-md transition-all active:scale-95">
+                        인증 및 로그인
+                    </button>
+                    <button type="button" onclick="closeAdminAuthModal()" class="px-4 py-3 border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50">
+                        취소
+                    </button>
+                </div>
+            </form>
+
+            <div class="pt-2 border-t border-slate-100">
+                <p class="text-[11px] text-slate-400">💡 초기 기본 비밀번호는 <span class="font-bold text-slate-600">1234</span> 입니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global States
+        let appsScriptUrl = localStorage.getItem("청호초_학부모설문_GAS_URL") || "";
+        let surveyResponses = JSON.parse(localStorage.getItem("청호초_설문응답_목록") || "[]");
+        let chartInstances = {};
+
+        // Admin Security Lock State
+        const ADMIN_PASSWORD = "2027"; // 기본 관리자 비밀번호 (필요시 변경 가능)
+        let isAdminAuthenticated = sessionStorage.getItem("청호초_관리자_인증") === "true";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateAppsScriptStatus();
+            updateProgress();
+            updateAdminTabIcon();
+            
+            // If responses exist, pre-render dashboard
+            if (surveyResponses.length > 0) {
+                renderDashboardAnalytics();
+            }
+        });
+
+        // Check & Request Admin Access
+        function requestAdminAccess() {
+            if (isAdminAuthenticated) {
+                switchTab('admin');
+            } else {
+                openAdminAuthModal();
+            }
+        }
+
+        function openAdminAuthModal() {
+            document.getElementById('adminPasswordInput').value = "";
+            document.getElementById('adminAuthError').classList.add('hidden');
+            document.getElementById('adminAuthModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('adminPasswordInput').focus();
+            }, 100);
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').classList.add('hidden');
+        }
+
+        function handleAdminPasswordSubmit(e) {
+            e.preventDefault();
+            const inputPw = document.getElementById('adminPasswordInput').value.trim();
+            
+            if (inputPw === ADMIN_PASSWORD) {
+                isAdminAuthenticated = true;
+                sessionStorage.setItem("청호초_관리자_인증", "true");
+                updateAdminTabIcon();
+                closeAdminAuthModal();
+                switchTab('admin');
+                showNotice("관리자 인증 성공", "관리자 대시보드로 이동합니다.", "success");
+            } else {
+                const errorEl = document.getElementById('adminAuthError');
+                errorEl.classList.remove('hidden');
+                document.getElementById('adminPasswordInput').focus();
+                document.getElementById('adminPasswordInput').select();
+            }
+        }
+
+        function lockAdmin() {
+            isAdminAuthenticated = false;
+            sessionStorage.removeItem("청호초_관리자_인증");
+            updateAdminTabIcon();
+            switchTab('survey');
+            showNotice("대시보드 잠금", "관리자 세션이 종료되었습니다. 다시 접근하려면 비밀번호가 필요합니다.", "info");
+        }
+
+        function updateAdminTabIcon() {
+            const icon = document.getElementById('adminTabIcon');
+            if (icon) {
+                if (isAdminAuthenticated) {
+                    icon.className = "fa-solid fa-lock-open mr-1.5 text-emerald-600";
+                } else {
+                    icon.className = "fa-solid fa-lock mr-1.5";
+                }
+            }
+        }
+
+        // Tab Switching Function
+        function switchTab(mode) {
+            const surveyView = document.getElementById('surveyView');
+            const adminView = document.getElementById('adminView');
+            const tabSurveyBtn = document.getElementById('tabSurveyBtn');
+            const tabAdminBtn = document.getElementById('tabAdminBtn');
+            const progressBarWrapper = document.getElementById('surveyProgressBarWrapper');
+
+            if (mode === 'admin' && !isAdminAuthenticated) {
+                openAdminAuthModal();
+                return;
+            }
+
+            if (mode === 'survey') {
+                surveyView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                progressBarWrapper.classList.remove('hidden');
+
+                tabSurveyBtn.className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm";
+                tabAdminBtn.className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                surveyView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                progressBarWrapper.classList.add('hidden');
+
+                tabAdminBtn.className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-white text-sky-700 shadow-sm";
+                tabSurveyBtn.className = "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-900";
+
+                // Render Dashboard
+                renderDashboardAnalytics();
+            }
+        }
+
+        // Toggle Q3-1 conditional field visibility
+        function toggleQ3Reason() {
+            const selectedVal = document.querySelector('input[name="q3_special"]:checked')?.value;
+            const wrapper = document.getElementById('q3_reason_wrapper');
+            if (selectedVal === '불만족' || selectedVal === '매우 불만족') {
+                wrapper.classList.remove('opacity-50');
+                document.getElementById('q3_1_reason').focus();
+            }
+        }
+
+        // Validate max checkboxes (Q4 max 2 selections)
+        function validateMaxCheck(groupName, maxAllowed) {
+            const checkboxes = document.querySelectorAll(`input[name="${groupName}"]`);
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            
+            document.getElementById('q4_count').textContent = `${checkedCount} / ${maxAllowed}개 선택`;
+
+            if (checkedCount > maxAllowed) {
+                showNotice("최대 선택 초과", `이 문항은 최대 ${maxAllowed}개까지 선택 가능합니다.`, "warning");
+                event.target.checked = false;
+                document.getElementById('q4_count').textContent = `${maxAllowed} / ${maxAllowed}개 선택`;
+            }
+        }
+
+        // Calculate and update form completion progress bar
+        function updateProgress() {
+            const requiredGroups = [
+                'q1_grade', 'q2_satisfaction', 'q3_special', 
+                'q4_topics', 'q5_reduce', 'q6_increase', 
+                'q7_vacation', 'q8_holiday', 'q9_eval', 
+                'q10_sports', 'q11_showcase', 'q12_trip'
+            ];
+
+            let completed = 0;
+            requiredGroups.forEach(group => {
+                const checked = document.querySelectorAll(`input[name="${group}"]:checked`);
+                if (checked.length > 0) completed++;
+            });
+
+            const percent = Math.round((completed / requiredGroups.length) * 100);
+            document.getElementById('progressBar').style.width = `${percent}%`;
+        }
+
+        // Modal & Apps Script Config
+        function openAppsScriptModal() {
+            document.getElementById('scriptUrlInput').value = appsScriptUrl;
+            document.getElementById('appsScriptModal').classList.remove('hidden');
+        }
+
+        function closeAppsScriptModal() {
+            document.getElementById('appsScriptModal').classList.add('hidden');
+        }
+
+        function saveScriptUrl() {
+            const inputVal = document.getElementById('scriptUrlInput').value.trim();
+            appsScriptUrl = inputVal;
+            localStorage.setItem("청호초_학부모설문_GAS_URL", inputVal);
+            updateAppsScriptStatus();
+            closeAppsScriptModal();
+            showNotice("설정 완료", "구글 스프레드시트 연동 URL이 성공적으로 저장되었습니다.", "success");
+        }
+
+        function updateAppsScriptStatus() {
+            const statusText = document.getElementById('scriptStatusText');
+            if (appsScriptUrl) {
+                statusText.textContent = "시트 연동됨 ✅";
+            } else {
+                statusText.textContent = "스프레드시트 연동";
+            }
+        }
+
+        function copyAppsScriptCode() {
+            const codeText = document.getElementById('gasCodeText').innerText;
+            navigator.clipboard.writeText(codeText).then(() => {
+                showNotice("복사 완료", "Google Apps Script 코드가 클립보드에 복사되었습니다.", "success");
+            }).catch(() => {
+                const textArea = document.createElement("textarea");
+                textArea.value = codeText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotice("복사 완료", "코드가 복사되었습니다.", "success");
+            });
+        }
+
+        // Handle Form Submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const q1Checked = document.querySelectorAll('input[name="q1_grade"]:checked');
+            if (q1Checked.length === 0) {
+                showNotice("입력 확인", "Q1 자녀 학년을 최소 하나 이상 선택해 주세요.", "warning");
+                return;
+            }
+
+            const formData = {
+                q1_grade: Array.from(document.querySelectorAll('input[name="q1_grade"]:checked')).map(cb => cb.value),
+                q2_satisfaction: document.querySelector('input[name="q2_satisfaction"]:checked')?.value || "",
+                q2_1_reason: document.getElementById('q2_1_reason').value,
+                q3_special: document.querySelector('input[name="q3_special"]:checked')?.value || "",
+                q3_1_reason: document.getElementById('q3_1_reason').value,
+                q4_topics: Array.from(document.querySelectorAll('input[name="q4_topics"]:checked')).map(cb => cb.value),
+                q5_reduce: document.querySelector('input[name="q5_reduce"]:checked')?.value || "",
+                q6_increase: document.querySelector('input[name="q6_increase"]:checked')?.value || "",
+                q7_vacation: getRadioValWithEtc('q7_vacation', 'q7_etc_text'),
+                q8_holiday: getRadioValWithEtc('q8_holiday', 'q8_etc_text'),
+                q9_eval: getRadioValWithEtc('q9_eval', 'q9_etc_text'),
+                q10_sports: document.querySelector('input[name="q10_sports"]:checked')?.value || "",
+                q10_1_opinion: document.getElementById('q10_1_opinion').value,
+                q11_showcase: document.querySelector('input[name="q11_showcase"]:checked')?.value || "",
+                q11_1_opinion: document.getElementById('q11_1_opinion').value,
+                q12_trip: document.querySelector('input[name="q12_trip"]:checked')?.value || "",
+                q12_1_opinion: document.getElementById('q12_1_opinion').value,
+                q13_overall: document.getElementById('q13_overall').value,
+                submittedAt: new Date().toLocaleString("ko-KR")
+            };
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> 구글 시트로 전송 중...`;
+
+            // Always save locally to avoid data loss
+            saveLocalBackup(formData);
+
+            if (appsScriptUrl) {
+                try {
+                    await fetch(appsScriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+
+                    showNotice("제출 완료!", "학부모님의 응답이 구글 시트 및 앱 대시보드에 안전하게 저장되었습니다.", "success");
+                    document.getElementById('surveyForm').reset();
+                    updateProgress();
+                } catch (err) {
+                    showNotice("전송 유의", "인터넷 상태로 인해 로컬에 안전히 백업 저장되었습니다.", "info");
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> 설문 응답 제출하기`;
+                }
+            } else {
+                showNotice("제출 완료 (로컬 저장)", "스프레드시트 미연동 상태로 대시보드에 응답이 저장되었습니다.", "info");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> 설문 응답 제출하기`;
+                document.getElementById('surveyForm').reset();
+                updateProgress();
+            }
+        }
+
+        function getRadioValWithEtc(radioName, textId) {
+            const val = document.querySelector(`input[name="${radioName}"]:checked`)?.value || "";
+            const etcText = document.getElementById(textId)?.value.trim();
+            if (val === '기타' || val === '기타 의견') {
+                return etcText ? `기타 (${etcText})` : val;
+            }
+            return val;
+        }
+
+        function saveLocalBackup(data) {
+            surveyResponses.unshift(data);
+            localStorage.setItem("청호초_설문응답_목록", JSON.stringify(surveyResponses));
+        }
+
+        // Fetch Live Data from Google Sheets
+        async function fetchSheetDataData() {
+            if (!appsScriptUrl) {
+                showNotice("연동 필요", "상단 [스프레드시트 연동] 버튼을 눌러 Apps Script URL을 먼저 입력해 주세요.", "warning");
+                return;
+            }
+
+            const syncIcon = document.getElementById('syncIcon');
+            syncIcon.classList.add('fa-spin');
+
+            try {
+                const res = await fetch(appsScriptUrl);
+                const json = await res.json();
+
+                if (json.result === 'success' && json.responses && json.responses.length > 1) {
+                    // Convert raw rows to object list
+                    const rows = json.responses.slice(1); // skip headers
+                    const fetched = rows.map(r => ({
+                        submittedAt: r[0],
+                        q1_grade: r[1] ? r[1].split(', ') : [],
+                        q2_satisfaction: r[2],
+                        q2_1_reason: r[3],
+                        q3_special: r[4],
+                        q3_1_reason: r[5],
+                        q4_topics: r[6] ? r[6].split(', ') : [],
+                        q5_reduce: r[7],
+                        q6_increase: r[8],
+                        q7_vacation: r[9],
+                        q8_holiday: r[10],
+                        q9_eval: r[11],
+                        q10_sports: r[12],
+                        q10_1_opinion: r[13],
+                        q11_showcase: r[14],
+                        q11_1_opinion: r[15],
+                        q12_trip: r[16],
+                        q12_1_opinion: r[17],
+                        q13_overall: r[18]
+                    }));
+
+                    surveyResponses = fetched;
+                    localStorage.setItem("청호초_설문응답_목록", JSON.stringify(surveyResponses));
+                    renderDashboardAnalytics();
+                    showNotice("동기화 성공", `구글 시트로부터 총 ${fetched.length}건의 응답을 성공적으로 불러왔습니다.`, "success");
+                } else {
+                    showNotice("데이터 없음", "구글 시트에 아직 기록된 응답이 없거나 헤더만 존재합니다.", "info");
+                }
+            } catch (err) {
+                showNotice("동기화 안내", "Google Apps Script CORS 이슈 발생 시 백업 데이터를 표시합니다. 구글 시트에 데이터는 안전하게 기록되어 있습니다.", "info");
+            } finally {
+                syncIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // Load Mock Sample Data for Testing
+        function loadSampleData() {
+            surveyResponses = [
+                { submittedAt: "2026. 11. 30. 10:15", q1_grade: ["1학년", "3학년"], q2_satisfaction: "매우 만족", q2_1_reason: "선생님들이 친절하시고 학교 프로그램이 다양함", q3_special: "만족", q3_1_reason: "", q4_topics: ["독서인문교육", "정보(SW, AI)교육"], q5_reduce: "없음(현행유지)", q6_increase: "체육", q7_vacation: "1월 종·졸업식 후 겨울방학(현행 유지)", q8_holiday: "찬성", q9_eval: "현행 유지 (연 2회 통지)", q10_sports: "매우 만족", q10_1_opinion: "가족 참여 종목 확대 희망", q11_showcase: "만족", q11_1_opinion: "학급별 영상 제공 요청", q12_trip: "매우 만족", q12_1_opinion: "안전지도 강화 지속 부탁드립니다", q13_overall: "청호초등학교 최고입니다!" },
+                { submittedAt: "2026. 11. 30. 11:20", q1_grade: ["2학년"], q2_satisfaction: "만족", q2_1_reason: "급식이 맛있고 안전함", q3_special: "만족", q3_1_reason: "", q4_topics: ["정보(SW, AI)교육", "스포츠, 놀이교육"], q5_reduce: "실과", q6_increase: "창의적 체험활동", q7_vacation: "1월 종·졸업식 후 겨울방학(현행 유지)", q8_holiday: "찬성", q9_eval: "현행 유지 (연 2회 통지)", q10_sports: "만족", q10_1_opinion: "", q11_showcase: "보통", q11_1_opinion: "", q12_trip: "만족", q12_1_opinion: "", q13_overall: "체육 활동 공간이 더 확충되었으면 함" },
+                { submittedAt: "2026. 11. 30. 14:05", q1_grade: ["5학년"], q2_satisfaction: "매우 만족", q2_1_reason: "인성교육 및 체험 학습 만족", q3_special: "매우 만족", q3_1_reason: "", q4_topics: ["생태환경교육", "독서인문교육"], q5_reduce: "도덕", q6_increase: "수학", q7_vacation: "12월 겨울방학 ~ 2월 개학, 종·졸업식", q8_holiday: "찬성", q9_eval: "현행 유지 (연 2회 통지)", q10_sports: "매우 만족", q10_1_opinion: "그늘막 설치 필요", q11_showcase: "매우 만족", q11_1_opinion: "전교생 성과발표도 고려", q12_trip: "만족", q12_1_opinion: "", q13_overall: "늘 애써주셔서 감사합니다." },
+                { submittedAt: "2026. 11. 30. 16:40", q1_grade: ["4학년", "6학년"], q2_satisfaction: "보통", q2_1_reason: "학력 보장 프로그램 보완 요구", q3_special: "불만족", q3_1_reason: "독서 행사 형식이 다소 단조로움", q4_topics: ["기초학력 보장 및 학력 향상", "인성교육"], q5_reduce: "창의적 체험활동", q6_increase: "영어", q7_vacation: "1월 종·졸업식 후 겨울방학(현행 유지)", q8_holiday: "반대", q9_eval: "기타 (수시 통지 희망)", q10_sports: "보통", q10_1_opinion: "", q11_showcase: "불만족", q11_1_opinion: "학부모 관람 장소 협소", q12_trip: "보통", q12_1_opinion: "체험 장소 원거리 자제", q13_overall: "기초학력 지도에 힘써주세요." }
+            ];
+            localStorage.setItem("청호초_설문응답_목록", JSON.stringify(surveyResponses));
+            renderDashboardAnalytics();
+            showNotice("샘플 데이터 생성", "테스트용 학부모 응답 샘플 4건이 생성되었습니다.", "success");
+        }
+
+        // Render All Dashboard Components
+        function renderDashboardAnalytics() {
+            const total = surveyResponses.length;
+            document.getElementById('statTotalCount').textContent = `${total} 명`;
+
+            if (total === 0) {
+                renderTable([]);
+                renderTextFeedback();
+                return;
+            }
+
+            // Calculate KPIs
+            const satisfiedCount = surveyResponses.filter(r => r.q2_satisfaction === "매우 만족" || r.q2_satisfaction === "만족").length;
+            const satRate = Math.round((satisfiedCount / total) * 100);
+            document.getElementById('statSatisfactionRate').textContent = `${satRate}%`;
+
+            const holidayApprove = surveyResponses.filter(r => r.q8_holiday === "찬성").length;
+            const holRate = Math.round((holidayApprove / total) * 100);
+            document.getElementById('statHolidayApprove').textContent = `${holRate}%`;
+
+            // Render Charts for 4 Sectors
+            renderSector1Charts();
+            renderSector2Charts();
+            renderSector3Charts();
+            renderSector4Charts();
+
+            // Render Qualitative Text & Table
+            renderTextFeedback();
+            renderTable(surveyResponses);
+        }
+
+        // Helper to destroy existing chart instance
+        function createChart(canvasId, type, data, options) {
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, { type, data, options });
+        }
+
+        // Sector 1: Q1, Q2, Q3
+        function renderSector1Charts() {
+            const gradeCounts = { "1학년": 0, "2학년": 0, "3학년": 0, "4학년": 0, "5학년": 0, "6학년": 0 };
+            surveyResponses.forEach(r => {
+                if (r.q1_grade) {
+                    r.q1_grade.forEach(g => { if (gradeCounts[g] !== undefined) gradeCounts[g]++; });
+                }
+            });
+
+            createChart('chartQ1', 'bar', {
+                labels: Object.keys(gradeCounts),
+                datasets: [{
+                    label: '재학 자녀 수',
+                    data: Object.values(gradeCounts),
+                    backgroundColor: '#0284c7',
+                    borderRadius: 10
+                }]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            });
+
+            const levels = ["매우 만족", "만족", "보통", "불만족", "매우 불만족"];
+            const q2Counts = levels.map(l => surveyResponses.filter(r => r.q2_satisfaction === l).length);
+            const q3Counts = levels.map(l => surveyResponses.filter(r => r.q3_special === l).length);
+
+            createChart('chartQ2Q3', 'bar', {
+                labels: levels,
+                datasets: [
+                    { label: 'Q2. 전반적 만족도', data: q2Counts, backgroundColor: '#10b981', borderRadius: 8 },
+                    { label: 'Q3. 특색교육 만족도', data: q3Counts, backgroundColor: '#6366f1', borderRadius: 8 }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            });
+        }
+
+        // Sector 2: Q4 (Sheet2 Focus), Q5, Q6
+        function renderSector2Charts() {
+            const topicCounts = {
+                "독서인문교육": 0, "정보(SW, AI)교육": 0, "인성교육": 0,
+                "생태환경교육": 0, "민주시민교육": 0, "기초학력 보장 및 학력 향상": 0,
+                "진로연계교육": 0, "스포츠, 놀이교육": 0, "예술교육": 0
+            };
+
+            surveyResponses.forEach(r => {
+                if (r.q4_topics) {
+                    r.q4_topics.forEach(t => {
+                        if (topicCounts[t] !== undefined) topicCounts[t]++;
+                        else topicCounts[t] = 1;
+                    });
+                }
+            });
+
+            let topTopic = "-";
+            let maxCount = -1;
+            Object.entries(topicCounts).forEach(([topic, count]) => {
+                if (count > maxCount && count > 0) {
+                    maxCount = count;
+                    topTopic = topic;
+                }
+            });
+            document.getElementById('statTopQ4').textContent = topTopic;
+
+            createChart('chartQ4Topics', 'bar', {
+                labels: Object.keys(topicCounts).map(t => t.length > 8 ? t.slice(0, 8) + ".." : t),
+                datasets: [{
+                    label: '선택 건수',
+                    data: Object.values(topicCounts),
+                    backgroundColor: '#4f46e5',
+                    borderRadius: 8
+                }]
+            }, {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+            });
+
+            const subjects = ["없음(현행유지)", "국어", "도덕", "사회", "수학", "과학", "체육", "음악", "미술", "실과", "영어", "창의적 체험활동"];
+            const q5Counts = subjects.map(s => surveyResponses.filter(r => r.q5_reduce === s).length);
+            const q6Counts = subjects.map(s => surveyResponses.filter(r => r.q6_increase === s).length);
+
+            createChart('chartQ5Q6', 'bar', {
+                labels: subjects,
+                datasets: [
+                    { label: 'Q5. 시수 감축', data: q5Counts, backgroundColor: '#f43f5e', borderRadius: 6 },
+                    { label: 'Q6. 시수 증배', data: q6Counts, backgroundColor: '#0ea5e9', borderRadius: 6 }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            });
+        }
+
+        // Sector 3: Q7, Q8, Q9
+        function renderSector3Charts() {
+            const q7Counts = [
+                surveyResponses.filter(r => r.q7_vacation && r.q7_vacation.includes("1월")).length,
+                surveyResponses.filter(r => r.q7_vacation && r.q7_vacation.includes("12월")).length,
+                surveyResponses.filter(r => r.q7_vacation && r.q7_vacation.includes("기타")).length
+            ];
+
+            createChart('chartQ7', 'doughnut', {
+                labels: ['1월 종·졸업식', '12월 겨울방학', '기타'],
+                datasets: [{
+                    data: q7Counts,
+                    backgroundColor: ['#0284c7', '#38bdf8', '#cbd5e1']
+                }]
+            }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } });
+
+            const q8Counts = [
+                surveyResponses.filter(r => r.q8_holiday && r.q8_holiday.includes("찬성")).length,
+                surveyResponses.filter(r => r.q8_holiday && r.q8_holiday.includes("반대")).length,
+                surveyResponses.filter(r => r.q8_holiday && r.q8_holiday.includes("기타")).length
+            ];
+
+            createChart('chartQ8', 'pie', {
+                labels: ['찬성', '반대', '기타'],
+                datasets: [{
+                    data: q8Counts,
+                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b']
+                }]
+            }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } });
+
+            const q9Counts = [
+                surveyResponses.filter(r => r.q9_eval && r.q9_eval.includes("현행")).length,
+                surveyResponses.filter(r => r.q9_eval && r.q9_eval.includes("기타")).length
+            ];
+
+            createChart('chartQ9', 'doughnut', {
+                labels: ['현행 유지 (연 2회)', '기타 의견'],
+                datasets: [{
+                    data: q9Counts,
+                    backgroundColor: ['#8b5cf6', '#c084fc']
+                }]
+            }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } });
+        }
+
+        // Sector 4: Q10, Q11, Q12
+        function renderSector4Charts() {
+            const levels = ["매우 만족", "만족", "보통", "불만족", "매우 불만족"];
+            const q10 = levels.map(l => surveyResponses.filter(r => r.q10_sports === l).length);
+            const q11 = levels.map(l => surveyResponses.filter(r => r.q11_showcase === l).length);
+            const q12 = levels.map(l => surveyResponses.filter(r => r.q12_trip === l).length);
+
+            createChart('chartEvents', 'bar', {
+                labels: levels,
+                datasets: [
+                    { label: 'Q10. 운동회', data: q10, backgroundColor: '#ec4899', borderRadius: 6 },
+                    { label: 'Q11. 성과발표회', data: q11, backgroundColor: '#8b5cf6', borderRadius: 6 },
+                    { label: 'Q12. 현장체험학습', data: q12, backgroundColor: '#14b8a6', borderRadius: 6 }
+                ]
+            }, {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            });
+        }
+
+        // Qualitative Text Feedback Renderer
+        function renderTextFeedback() {
+            const filter = document.getElementById('textFilterSelect').value;
+            const container = document.getElementById('textFeedbackContainer');
+            container.innerHTML = "";
+
+            let list = [];
+
+            surveyResponses.forEach((r) => {
+                const grade = r.q1_grade ? r.q1_grade.join(',') : '미지정';
+                
+                if ((filter === 'all' || filter === 'q2_1') && r.q2_1_reason) {
+                    list.push({ tag: 'Q2-1 전반만족이유', grade, text: r.q2_1_reason, time: r.submittedAt });
+                }
+                if ((filter === 'all' || filter === 'q3_1') && r.q3_1_reason) {
+                    list.push({ tag: 'Q3-1 특색불만족이유', grade, text: r.q3_1_reason, time: r.submittedAt });
+                }
+                if ((filter === 'all' || filter === 'q10_1') && r.q10_1_opinion) {
+                    list.push({ tag: 'Q10-1 운동회건의', grade, text: r.q10_1_opinion, time: r.submittedAt });
+                }
+                if ((filter === 'all' || filter === 'q11_1') && r.q11_1_opinion) {
+                    list.push({ tag: 'Q11-1 성과발표회건의', grade, text: r.q11_1_opinion, time: r.submittedAt });
+                }
+                if ((filter === 'all' || filter === 'q12_1') && r.q12_1_opinion) {
+                    list.push({ tag: 'Q12-1 체험학습건의', grade, text: r.q12_1_opinion, time: r.submittedAt });
+                }
+                if ((filter === 'all' || filter === 'q13') && r.q13_overall) {
+                    list.push({ tag: 'Q13 종합건의', grade, text: r.q13_overall, time: r.submittedAt });
+                }
+            });
+
+            if (list.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">해당하는 주관식 의견이 없습니다.</p>`;
+                return;
+            }
+
+            list.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = "p-3 bg-white border border-slate-200/80 rounded-xl text-xs space-y-1 shadow-sm";
+                itemEl.innerHTML = `
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">${item.tag}</span>
+                        <span class="font-medium">${item.grade} 학부모 | ${item.time || ''}</span>
+                    </div>
+                    <p class="text-slate-800 font-medium leading-relaxed">${escapeHtml(item.text)}</p>
+                `;
+                container.appendChild(itemEl);
+            });
+        }
+
+        // Raw Data Table Renderer
+        function renderTable(data) {
+            const tbody = document.getElementById('rawTableBody');
+            tbody.innerHTML = "";
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-8 text-slate-400">데이터가 없습니다.</td></tr>`;
+                return;
+            }
+
+            data.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-100 hover:bg-slate-50/80 transition-all";
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-slate-400">${i + 1}</td>
+                    <td class="p-2.5 whitespace-nowrap text-slate-500">${r.submittedAt || '-'}</td>
+                    <td class="p-2.5 font-semibold text-slate-800">${r.q1_grade ? r.q1_grade.join(', ') : '-'}</td>
+                    <td class="p-2.5 font-medium">${r.q2_satisfaction || '-'}</td>
+                    <td class="p-2.5 font-medium">${r.q3_special || '-'}</td>
+                    <td class="p-2.5 text-indigo-700 font-semibold max-w-xs truncate">${r.q4_topics ? r.q4_topics.join(', ') : '-'}</td>
+                    <td class="p-2.5 text-rose-600 font-medium">${r.q5_reduce || '-'}</td>
+                    <td class="p-2.5 text-sky-600 font-medium">${r.q6_increase || '-'}</td>
+                    <td class="p-2.5 text-slate-600 truncate max-w-xs">${r.q7_vacation || '-'}</td>
+                    <td class="p-2.5 text-slate-600">${r.q8_holiday || '-'}</td>
+                    <td class="p-2.5 text-slate-600 truncate max-w-xs">${r.q13_overall || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterTable() {
+            const query = document.getElementById('tableSearchInput').value.toLowerCase();
+            const filtered = surveyResponses.filter(r => {
+                return JSON.stringify(r).toLowerCase().includes(query);
+            });
+            renderTable(filtered);
+        }
+
+        // Export CSV Function
+        function exportCSV() {
+            if (surveyResponses.length === 0) {
+                showNotice("다운로드 불가", "내보낼 데이터가 없습니다.", "warning");
+                return;
+            }
+
+            let csv = "\uFEFF제출일시,자녀학년,전반적만족도,만족이유,특색교육만족도,특색불만족이유,Q4희망특색과목,감축희망과목,증배희망과목,방학형태,5월휴업일,평가통지,운동회만족도,성과발표회만족도,체험학습만족도,종합건의\n";
+
+            surveyResponses.forEach(r => {
+                const row = [
+                    r.submittedAt || "",
+                    r.q1_grade ? r.q1_grade.join(";") : "",
+                    r.q2_satisfaction || "",
+                    r.q2_1_reason || "",
+                    r.q3_special || "",
+                    r.q3_1_reason || "",
+                    r.q4_topics ? r.q4_topics.join(";") : "",
+                    r.q5_reduce || "",
+                    r.q6_increase || "",
+                    r.q7_vacation || "",
+                    r.q8_holiday || "",
+                    r.q9_eval || "",
+                    r.q10_sports || "",
+                    r.q11_showcase || "",
+                    r.q12_trip || "",
+                    r.q13_overall || ""
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`);
+
+                csv += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `목포청호초_학부모설문_응답분석_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        // Modal Helpers
+        function showNotice(title, message, type = "success") {
+            const modal = document.getElementById('noticeModal');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+
+            const icon = document.getElementById('modalIcon');
+            if (type === "success") {
+                icon.className = "w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl mx-auto";
+                icon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+            } else if (type === "warning") {
+                icon.className = "w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto";
+                icon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+            } else {
+                icon.className = "w-16 h-16 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-2xl mx-auto";
+                icon.innerHTML = `<i class="fa-solid fa-circle-info"></i>`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('noticeModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
