@@ -87,12 +87,6 @@
                     <i class="fa-solid fa-lock mr-1.5" id="adminTabIcon"></i>관리자 대시보드
                 </button>
             </div>
-
-            <!-- GAS Link Settings Button -->
-            <button onclick="openAppsScriptModal()" class="inline-flex items-center px-3 py-1.5 border border-sky-600 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95">
-                <i class="fa-solid fa-plug text-sky-600 mr-1.5"></i>
-                <span id="scriptStatusText">스프레드시트 연동</span>
-            </button>
         </div>
 
         <!-- Realtime Progress Bar for Survey -->
@@ -460,6 +454,10 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+                <button onclick="openAppsScriptModal()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center shadow-sm">
+                    <i class="fa-solid fa-plug text-sky-400 mr-1.5"></i>
+                    <span id="scriptStatusText">스프레드시트 연동</span>
+                </button>
                 <button onclick="fetchSheetDataData()" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all flex items-center shadow-md">
                     <i class="fa-solid fa-rotate text-sm mr-1.5" id="syncIcon"></i> 구글 시트 동기화
                 </button>
@@ -903,7 +901,7 @@ function doPost(e) {
         let chartInstances = {};
 
         // Admin Security Lock State
-        const ADMIN_PASSWORD = "2027"; // 기본 관리자 비밀번호 (필요시 변경 가능)
+        const ADMIN_PASSWORD = "2027"; // <- 여기에 사용하실 비밀번호를 입력하세요 (예: "2027ch")
         let isAdminAuthenticated = sessionStorage.getItem("청호초_관리자_인증") === "true";
 
         window.addEventListener('DOMContentLoaded', () => {
