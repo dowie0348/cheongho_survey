@@ -896,7 +896,8 @@ function doPost(e) {
 
     <script>
         // Global States
-        let appsScriptUrl = localStorage.getItem("청호초_학부모설문_GAS_URL") || "";
+        const DEFAULT_GAS_URL = ""; // 배포 시 기본 적용될 Google Apps Script Web App URL
+        let appsScriptUrl = localStorage.getItem("청호초_학부모설문_GAS_URL") || DEFAULT_GAS_URL;
         let surveyResponses = JSON.parse(localStorage.getItem("청호초_설문응답_목록") || "[]");
         let chartInstances = {};
 
@@ -1152,11 +1153,9 @@ function doPost(e) {
                     submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> 설문 응답 제출하기`;
                 }
             } else {
-                showNotice("제출 완료 (로컬 저장)", "스프레드시트 미연동 상태로 대시보드에 응답이 저장되었습니다.", "info");
+                showNotice("시스템 점검 중", "스프레드시트 연동 준비 중입니다. 담당 선생님께 문의하시거나 잠시 후 다시 제출해 주세요.", "warning");
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane mr-2"></i> 설문 응답 제출하기`;
-                document.getElementById('surveyForm').reset();
-                updateProgress();
             }
         }
 
