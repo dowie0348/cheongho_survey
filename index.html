@@ -896,7 +896,7 @@ function doPost(e) {
 
     <script>
         // Global States
-        const DEFAULT_GAS_URL = ""; // 배포 시 기본 적용될 Google Apps Script Web App URL
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxcYkkyY5yW3CSC7I-lrlXCtAtfyvmxAR2DxcVWk8CiSDcTTOxBnFWcljTM9xto-Mo/exec"; // 배포 시 기본 적용될 Google Apps Script Web App URL
         let appsScriptUrl = localStorage.getItem("청호초_학부모설문_GAS_URL") || DEFAULT_GAS_URL;
         let surveyResponses = JSON.parse(localStorage.getItem("청호초_설문응답_목록") || "[]");
         let chartInstances = {};
